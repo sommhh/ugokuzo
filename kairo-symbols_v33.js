@@ -1,50 +1,10 @@
-/* kairo-symbols_v33.js - タブ分け / 回転 / 本体無改造 */
-(()=>{const LS='kairo_symbols_v33';
-const load=()=>{try{return JSON.parse(localStorage.getItem(LS)||'{}')}catch{return{}}};
-let symbols=load(); const save=()=>localStorage.setItem(LS,JSON.stringify(symbols));
-
-if(!Object.keys(symbols).length){
- symbols={
-  "スイッチ":{
-   "single":{name:"片切",svg:'<circle cx="0" cy="0" r="6" fill="#000"/>'},
-   "threeway":{name:"3路",svg:'<circle cx="-6" cy="0" r="6" fill="#000"/><text x="6" y="4" font-size="14" font-weight="700">3</text>'},
-   "fourway":{name:"4路",svg:'<circle cx="-6" cy="0" r="6" fill="#000"/><text x="6" y="4" font-size="14" font-weight="700">4</text>'},
-   "hotaru":{name:"H",svg:'<circle cx="-6" cy="0" r="6" fill="#000"/><text x="6" y="4" font-size="14" font-weight="700">H</text>'},
-   "threeway_hotaru":{name:"3H",svg:'<circle cx="-6" cy="0" r="6" fill="#000"/><text x="6" y="4" font-size="14" font-weight="700">3H</text>'}
-  },
-  "コンセント":{
-   "single":{name:"1口",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/>'},
-   "double":{name:"2口",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/><text x="16" y="6" font-size="14" font-weight="700">2</text>'},
-   "ev":{name:"EV",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/><text x="16" y="6" font-size="14" font-weight="700">EV</text>'},
-   "v200":{name:"200V",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/><text x="16" y="6" font-size="14" font-weight="700">200V</text>'}
-  },
-  "弱電":{
-   "tel":{name:"TEL",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M0,-12 A12,12 0 0,0 0,12 Z" fill="#000"/><circle cx="0" cy="0" r="5" fill="#000"/>'},
-   "tv":{name:"TV",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><text x="0" y="5" text-anchor="middle" font-size="12" font-weight="700">TV</text>'},
-   "lan":{name:"LAN",svg:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><text x="0" y="5" text-anchor="middle" font-size="10" font-weight="700">LAN</text>'}
-  },
-  "分電盤他":{
-   "bundempan":{name:"分電盤",svg:'<rect x="-20" y="-10" width="40" height="20" fill="none" stroke="#000" stroke-width="2"/><path d="M-20,10 L20,-10 L20,10 Z" fill="#000"/>'},
-   "joho":{name:"情報盤",svg:'<rect x="-20" y="-10" width="40" height="20" fill="none" stroke="#000" stroke-width="2"/><path d="M-20,10 L20,-10" fill="none" stroke="#000" stroke-width="3"/>'}
-  }
- }; save();
-}
-
-function ready(fn){if(typeof draw==='function'&&typeof nodes!=='undefined')fn();else setTimeout(()=>ready(fn),50)}
-ready(()=>{
- // シンボルをrebuildから除外
- const _reb=rebuild; rebuild=function(){const s=nodes.filter(n=>n.type==='symbol');nodes=nodes.filter(n=>n.type!=='symbol');_reb();nodes.push(...s)};
- // 描画
- const _dr=draw; draw=function(){_dr();const nl=document.getElementById('nodes');nodes.filter(n=>n.type==='symbol').forEach(n=>{const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('transform',`translate(${n.x},${n.y}) rotate(${n.rot||0}) scale(1.4)`);g.style.cursor='pointer';if(n.selected)g.setAttribute('filter','url(#glow)');g.innerHTML=n.svg;g.onmousedown=e=>{e.stopPropagation();if(mode==='move')dragging=n};g.onclick=e=>{e.stopPropagation();n.selected=!n.selected;draw()};nl.appendChild(g)})};
- // Rキー回転
- window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'){let ch=false;nodes.filter(n=>n.selected&&n.type==='symbol').forEach(n=>{n.rot=((n.rot||0)+90)%360;ch=true});if(ch){draw();save()}}});
- // タブUI
- const pal=document.createElement('div');pal.style.cssText='position:absolute;top:12px;left:12px;z-index:30;width:260px;background:rgba(15,23,42,.95);border:1px solid #334155;border-radius:12px;overflow:hidden';
- const tabs=document.createElement('div');tabs.style.cssText='display:flex;background:#0f172a;border-bottom:1px solid #334155';
- const body=document.createElement('div');body.style.cssText='padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:300px;overflow:auto';
- pal.appendChild(tabs);pal.appendChild(body);document.querySelector('main').appendChild(pal);
- const cats=Object.keys(symbols);let cur='スイッチ';
- function render(){tabs.innerHTML='';body.innerHTML='';cats.forEach(c=>{const b=document.createElement('button');b.textContent=c;b.style.cssText=`padding:6px 8px;font-size:11px;border:none;background:${c===cur?'#0284c7':'transparent'};color:${c===cur?'white':'#94a3b8'}`;b.onclick=()=>{cur=c;render()};tabs.appendChild(b)});Object.entries(symbols[cur]||{}).forEach(([k,s])=>{const b=document.createElement('button');b.title=s.name;b.style.cssText='padding:4px;background:#1e293b;border:1px solid #334155;border-radius:6px';b.innerHTML=`<svg viewBox="-16 -16 32 32" width="28" height="28">${s.svg}</svg>`;b.onclick=()=>{nodes.push({id:nextId++,type:'symbol',x:200,y:200,rot:0,svg:s.svg,name:s.name,selected:true});draw();save()};body.appendChild(b)})}
- render();
-});
+/* kairo-symbols_v33.js */
+(()=>{const S={スイッチ:{single:{n:"片切",s:'<circle cx="0" cy="0" r="6" fill="#000"/>'},threeway:{n:"3路",s:'<circle cx="-6" cy="0" r="6" fill="#000"/><text x="6" y="4" font-size="14">3</text>'},threeway_hotaru:{n:"3H",s:'<circle cx="-6" cy="0" r="6" fill="#000"/><text x="6" y="4" font-size="14">3H</text>'}},コンセント:{single:{n:"1口",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/>'},double:{n:"2口",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/><text x="16" y="6" font-size="14">2</text>'},ev:{n:"EV",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/><text x="16" y="6" font-size="14">EV</text>'},v200:{n:"200V",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M-12,4 A12,12 0 0,0 12,4 Z" fill="#000"/><path d="M-4,-10 V4 M4,-10 V4" fill="none" stroke="#000" stroke-width="2"/><text x="16" y="6" font-size="14">200V</text>'}},弱電:{tel:{n:"TEL",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><path d="M0,-12 A12,12 0 0,0 0,12 Z" fill="#000"/><circle cx="0" cy="0" r="5" fill="#000"/>'},tv:{n:"TV",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><text x="0" y="5" text-anchor="middle" font-size="12">TV</text>'},lan:{n:"LAN",s:'<circle cx="0" cy="0" r="12" fill="none" stroke="#000" stroke-width="2"/><text x="0" y="5" text-anchor="middle" font-size="10">LAN</text>'}}};
+function init(){if(typeof draw!=='function')return setTimeout(init,50);
+ const _r=rebuild;rebuild=()=>{const t=nodes.filter(n=>n.type==='symbol');nodes=nodes.filter(n=>n.type!=='symbol');_r();nodes.push(...t)};
+ const _d=draw;draw=()=>{_d();const nl=document.getElementById('nodes');nodes.filter(n=>n.type==='symbol').forEach(n=>{const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('transform',`translate(${n.x},${n.y}) rotate(${n.rot||0}) scale(1.4)`);g.innerHTML=n.svg;g.style.cursor='pointer';if(n.selected)g.setAttribute('filter','url(#glow)');g.onmousedown=e=>{e.stopPropagation();if(mode==='move')dragging=n};g.onclick=e=>{e.stopPropagation();n.selected=!n.selected;draw()};nl.appendChild(g)})};
+ addEventListener('keydown',e=>{if(e.key.toLowerCase()==='r'){nodes.filter(n=>n.selected&&n.type==='symbol').forEach(n=>n.rot=((n.rot||0)+90)%360);draw();save()}});
+ const p=document.createElement('div');p.style.cssText='position:absolute;top:12px;left:12px;z-index:30;width:240px;background:#0f172aee;border:1px solid #334155;border-radius:10px';const t=document.createElement('div');t.style.cssText='display:flex;border-bottom:1px solid #334155';const b=document.createElement('div');b.style.cssText='padding:6px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;max-height:260px;overflow:auto';p.append(t,b);document.querySelector('main').append(p);
+ let cur='スイッチ';const cats=Object.keys(S);function render(){t.innerHTML='';b.innerHTML='';cats.forEach(c=>{const x=document.createElement('button');x.textContent=c;x.style.cssText=`flex:1;padding:5px;font-size:11px;background:${c===cur?'#0284c7':'transparent'};color:#fff;border:none`;x.onclick=()=>{cur=c;render()};t.append(x)});Object.values(S[cur]).forEach(v=>{const y=document.createElement('button');y.style.cssText='background:#1e293b;border:1px solid #334155;border-radius:5px;padding:3px';y.innerHTML=`<svg viewBox="-16 -16 32 32" width="26" height="26">${v.s}</svg>`;y.onclick=()=>{nodes.push({id:nextId++,type:'symbol',x:200,y:200,rot:0,svg:v.s,selected:true});draw();save()};b.append(y)})}render();
+}init();
 })();
